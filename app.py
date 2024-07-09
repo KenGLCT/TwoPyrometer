@@ -3,6 +3,7 @@ from pathlib import Path
 import base64
 import datetime
 import io
+import os 
 
 import dash
 from dash.dependencies import Input, Output, State
@@ -25,9 +26,7 @@ app.layout = html.Div([
         style = {
         'text-align':'left',
         'color':'#6A5ACD',
-        'text-indent': '2%',
-        'animation-name': 'titleanimation',
-        'animation-duration': '4s'
+        'text-indent': '2%'
         }
         ),
 
@@ -90,13 +89,20 @@ app.layout = html.Div([
     html.Br(),
     html.Br(),
 
+
+    #Submit Button
+    html.P("Enter Download Location: ",
+        style = {
+        'text-align':'left',
+        'color':'#6A5ACD',
+        }),
+    dcc.Input(id='downloadloc', value='', type='text',style={'width': '25%'}),
     html.Br(),
-    html.Button(id='submit-button', type='submit',children='Submit File Data'),
+    html.Br(),
+    html.Button(id='submit-button', type='submit',children='Download File Data'),
     html.Br(),
     html.Br(),
     
-
-
     html.Div(id='output_div'),
 
     html.Br(),
@@ -116,13 +122,14 @@ app.layout = html.Div([
             [State('Twoshift', 'value')],
             [State('Twobeg', 'value')],
             [State('Twoend', 'value')],
+            [State('downloadloc', 'value')],
             )
-def update_output(clicks, onepyropath, oneshift, onebeg, oneend, twopyropath, twoshift, twobeg, twoend):
+def update_output(clicks, onepyropath, oneshift, onebeg, oneend, twopyropath, twoshift, twobeg, twoend,downloadloc):
     if clicks is not None:
         try:
             #Parsing one Pyro Data
 
-            if onepyropath != '':
+            if onepyropath != '' and downloadloc !='':
                 onepyropath = onepyropath.replace('"', '')
                 onedf = pd.read_table(onepyropath, encoding="ISO-8859-1",low_memory=False)
                 headers = onedf.loc[ 18 , : ].tolist()#list of headers to be selected
@@ -140,13 +147,13 @@ def update_output(clicks, onepyropath, oneshift, onebeg, oneend, twopyropath, tw
                 onedf['index'] = onedf['i']
                 onedf = onedf.set_index('index')
                 if twopyropath == '':
-                    onedf.to_csv("onepyrodata.csv", index=False)
+                    onedf.to_csv(os.path.join(downloadloc,r'onepyrodata.csv'),index = False)
 
                 
 
 
             #Parsing two Pyro Data
-            if twopyropath != '':
+            if twopyropath != ''and downloadloc !='':
                 twopyropath = twopyropath.replace('"', '')
                 twodf = pd.read_table(twopyropath,sep =',',skipinitialspace=True, encoding="ISO-8859-1",header = 20,on_bad_lines = 'warn',engine='python')
                 #twodf.to_csv(str("wadadwdwadwdadwad")+".csv", index=False)
@@ -169,13 +176,13 @@ def update_output(clicks, onepyropath, oneshift, onebeg, oneend, twopyropath, tw
                 twodf['index'] = twodf['i2']
                 twodf = twodf.set_index('index')
                 if onepyropath == '':
-                    twodf.to_csv("twopyrodata.csv", index=False)
+                    twodf.to_csv(os.path.join(downloadloc,r'twopyrodata.csv'),index = False)
                 
-            if onepyropath !='' and twopyropath != '':
+            if onepyropath !='' and twopyropath != ''and downloadloc !='':
                 #"C:\Users\KenCL\Documents\Dashboard\240703-164505 - Growth-Etch - GLCT_0491 - GE_AB1_049 - .dat"
                 merged = pd.concat([onedf, twodf], axis=1, join="inner")
                 merged['t diff'] = merged['temp'] - merged['temp2']
-                merged.to_csv("mergedpyrodata.csv", index=False)
+                merged.to_csv(os.path.join(downloadloc,r'mergedpyrodata.csv'),index = False)
                 
             
                 
